@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+model SchoolClass {
+  id        Int       @id @default(autoincrement())
+  name      String
+  section   String
+  students  Student[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([name, section])
+  @@map("classes")
+}
+
+model Student {
+  id          Int         @id @default(autoincrement())
+  rollNo      String
+  firstName   String
+  lastName    String
+  gender      Gender
+  dateOfBirth DateTime?
+  phone       String?
+  address     String?
+  classId     Int
+  schoolClass SchoolClass @relation(fields: [classId], references: [id])
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([classId, rollNo])
+  @@map("students")
+}
