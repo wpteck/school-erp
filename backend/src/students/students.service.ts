@@ -71,10 +71,18 @@ export class StudentsService {
     }
   }
 
-  async remove(id: number) {
+    async remove(id: number) {
     try {
       return await this.prisma.student.delete({ where: { id } });
     } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2003'
+      ) {
+        throw new ConflictException(
+          'Is student ke fee records hain, isliye delete nahi ho sakta',
+        );
+      }
       this.handleError(error, id);
     }
   }

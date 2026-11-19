@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  LEAVE
+}
+
+enum FeeStatus {
+  UNPAID
+  PARTIAL
+  PAID
+}
+
+model SchoolClass {
+  id        Int            @id @default(autoincrement())
+  name      String
+  section   String
+  students  Student[]
+  teachers  TeacherClass[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@unique([name, section])
+  @@map("classes")
+}
+
+model Student {
+  id          Int          @id @default(autoincrement())
+  rollNo      String
+  firstName   String
+  lastName    String
+  gender      Gender
+  dateOfBirth DateTime?
+  phone       String?
+  address     String?
+  classId     Int
+  schoolClass SchoolClass  @relation(fields: [classId], references: [id])
+  attendances Attendance[]
+  fees        Fee[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@unique([classId, rollNo])
+  @@map("students")
+}
+
+model Teacher {
+  id         Int            @id @default(autoincrement())
+  employeeNo String         @unique
+  firstName  String
+  lastName   String
+  email      String         @unique
+  phone      String?
+  classes    TeacherClass[]
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@map("teachers")
+}
+
+model TeacherClass {
+  teacherId   Int
+  classId     Int
+  subject     String
+  teacher     Teacher     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  schoolClass SchoolClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+  assignedAt  DateTime    @default(now())
+
+  @@id([teacherId, classId, subject])
+  @@map("teacher_classes")
+}
+
+model Attendance {
+  id        Int              @id @default(autoincrement())
+  date      DateTime         @db.Date
+  status    AttendanceStatus
+  remarks   String?
+  studentId Int
+  student   Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@unique([studentId, date])
+  @@index([date])
+  @@map("attendances")
+}
+
+model Fee {
+  id         Int       @id @default(autoincrement())
+  year       Int
+  month      Int
+  amount     Int
+  paidAmount Int       @default(0)
+  status     FeeStatus @default(UNPAID)
+  dueDate    DateTime  @db.Date
+  paidAt     DateTime?
+  studentId  Int
+  student    Student   @relation(fields: [studentId], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@unique([studentId, year, month])
+  @@map("fees")
+}
